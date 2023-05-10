@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.wyymusic.mapper.FollowMapper">
+
+    <resultMap id="BaseResultMap" type="com.example.wyymusic.model.domain.Follow">
+            <id property="followId" column="followId" jdbcType="BIGINT"/>
+            <result property="userId" column="userId" jdbcType="BIGINT"/>
+            <result property="fansId" column="fansId" jdbcType="BIGINT"/>
+            <result property="createTime" column="createTime" jdbcType="TIMESTAMP"/>
+            <result property="updateTime" column="updateTime" jdbcType="TIMESTAMP"/>
+            <result property="isDelete" column="isDelete" jdbcType="TINYINT"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        followId,userId,fansId,
+        createTime,updateTime,isDelete
+    </sql>
+
+    <select id="selectFollowVoList" resultType="com.example.wyymusic.model.vo.FollowVo">
+        select f.fansId,u.userId,u.nickName,u.avatarUrl from user as u , (select followId,fansId from follow where userId = #{userId} and isDelete = 0) as f where u.userId = f.fansId;
+    </select>
+
+    <select id="selectMyFanList" resultType="com.example.wyymusic.model.vo.FollowVo">
+        select u.userId,u.nickName,u.avatarUrl from user as u , (select userId from follow where fansId = #{userId} and isDelete = 0) as f where u.userId = f.userId;
+    </select>
+
+    <select id="selectMyFansId" resultType="java.lang.Long">
+        select u.userId from user as u , (select userId from follow where fansId = #{userId} and isDelete = 0) as f where u.userId = f.userId;
+    </select>
+
+</mapper>

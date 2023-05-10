@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.wyymusic.mapper.MusicListMapper">
+
+    <resultMap id="BaseResultMap" type="com.example.wyymusic.model.domain.MusicList">
+            <id property="musicListId" column="musicListId" jdbcType="BIGINT"/>
+            <result property="userId" column="userId" jdbcType="BIGINT"/>
+            <result property="showImgUrl" column="showImgUrl" jdbcType="VARCHAR"/>
+            <result property="musicListInfo" column="musicListInfo" jdbcType="VARCHAR"/>
+            <result property="musicListContentIds" column="musicListContentIds" jdbcType="VARCHAR"/>
+            <result property="musicLikeNumber" column="musicLikeNumber" jdbcType="BIGINT"/>
+            <result property="musicFavoriteNumber" column="musicFavoriteNumber" jdbcType="BIGINT"/>
+            <result property="createTime" column="createTime" jdbcType="TIMESTAMP"/>
+            <result property="updateTime" column="updateTime" jdbcType="TIMESTAMP"/>
+            <result property="isDelete" column="isDelete" jdbcType="TINYINT"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        musicListId,userId,showImgUrl,
+        musicListInfo,musicListContentIds,musicLikeNumber,
+        musicFavoriteNumber,createTime,updateTime,
+        isDelete
+    </sql>
+    <select id="selectMusicListByIds" resultType="com.example.wyymusic.model.domain.MusicList">
+    </select>
+</mapper>
