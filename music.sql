@@ -111,6 +111,7 @@ create table community
     imgList     text                               not null comment '图片地址',
     musicId     bigint                             null comment '歌曲推荐地址',
     textContent text                               not null comment '动态文字内容',
+    communityLikeNumber     bigint   default 0                 not null comment '喜欢数',
     createTime  datetime default CURRENT_TIMESTAMP null comment '创建时间',
     updateTime  datetime default CURRENT_TIMESTAMP null on update CURRENT_TIMESTAMP comment '修改时间',
     isDelete    tinyint  default 0                 not null comment '逻辑-1删除 -0存在'

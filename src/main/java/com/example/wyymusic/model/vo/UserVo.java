@@ -7,6 +7,8 @@ import lombok.Data;
 
 import java.io.Serializable;
 import java.util.Date;
+import java.util.List;
+import java.util.Set;
 
 /**
  *
@@ -46,24 +48,9 @@ public class UserVo implements Serializable {
     private Integer gender;
 
     /**
-     * 密码
-     */
-    private String userPassword;
-
-    /**
-     * 电话号码
-     */
-    private String phone;
-
-    /**
-     * 邮箱
-     */
-    private String email;
-
-    /**
      * 标签
      */
-    private String tag;
+    private Set<String> tag;
 
     /**
      * 0-普通, 1- 作者 2-管理员

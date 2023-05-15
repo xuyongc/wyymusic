@@ -1,6 +1,7 @@
 package com.example.wyymusic.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -10,13 +11,14 @@ import com.example.wyymusic.common.ErrorCode;
 import com.example.wyymusic.common.Results;
 import com.example.wyymusic.common.exception.BusinessException;
 import com.example.wyymusic.model.domain.Music;
+import com.example.wyymusic.model.domain.User;
 import com.example.wyymusic.model.vo.*;
 import com.example.wyymusic.service.FavoriteService;
 import com.example.wyymusic.service.MusicService;
 import com.example.wyymusic.mapper.MusicMapper;
 import com.example.wyymusic.service.UserService;
 import com.example.wyymusic.utils.FileUpload;
-import com.example.wyymusic.utils.HotUtil;
+import com.example.wyymusic.utils.RedisUtil;
 import com.example.wyymusic.utils.UserHolder;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -31,8 +33,7 @@ import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 import static com.example.wyymusic.constant.CommonConstant.*;
-import static com.example.wyymusic.constant.TimeConstant.LISTENING_USER_TL;
-import static com.example.wyymusic.constant.TimeConstant.MUSIC_HOT_TL;
+import static com.example.wyymusic.constant.TimeConstant.*;
 
 /**
  * @author xyc
@@ -42,7 +43,6 @@ import static com.example.wyymusic.constant.TimeConstant.MUSIC_HOT_TL;
 @Service
 public class MusicServiceImpl extends ServiceImpl<MusicMapper, Music>
         implements MusicService {
-
 
     @Resource
     private FavoriteService favoriteService;
@@ -54,7 +54,7 @@ public class MusicServiceImpl extends ServiceImpl<MusicMapper, Music>
     private FileUpload fileUpload;
 
     @Resource
-    private HotUtil hotUtil;
+    private RedisUtil redisUtil;
 
     @Resource
     private StringRedisTemplate stringRedisTemplate;
@@ -83,8 +83,8 @@ public class MusicServiceImpl extends ServiceImpl<MusicMapper, Music>
         boolean isSave = this.save(music);
 
         if (!isSave) {
-            fileUpload.fileDelete(IMAGE_UPLOAD_SPACE,imgFilePath);
-            fileUpload.fileDelete(MP3_UPLOAD_SPACE,musicFilePath);
+            fileUpload.fileDelete(IMAGE_UPLOAD_SPACE, imgFilePath);
+            fileUpload.fileDelete(MP3_UPLOAD_SPACE, musicFilePath);
         }
 
         return Results.success(true);
@@ -103,32 +103,38 @@ public class MusicServiceImpl extends ServiceImpl<MusicMapper, Music>
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "该歌曲不存在");
         }
 
-        setListening(musicId);
-        hotUtil.setHotMusic(MUSIC_HOT,musicId);
-//        setHotMusic(musicId);
+        UserVo user = UserHolder.getUser();
+        if (user != null) {
+            Long userId = user.getUserId();
+            //设置正在听
+            setListening(musicId, userId);
+            //设置热点排行
+            redisUtil.setHotMusic(MUSIC_HOT, musicId);
+            //        设置我的听歌排行（永久）
+            setListened(musicId, userId, LISTENED, null);
+            //        设置我的听歌排行（七天）
+            setListened(musicId, userId, LISTENED, LISTENED_WEEK_TL);
+        }
         MusicVo musicVo = BeanUtil.copyProperties(music, MusicVo.class);
         return Results.success(musicVo);
     }
 
-    @Override
-    public void setListening(Long musicId){
+
+    public void setListening(Long musicId, Long userId) {
         String musicKey = MUSIC_LISTENING_USER + musicId;
-        UserVo user = UserHolder.getUser();
-        if (user != null){
-            stringRedisTemplate.opsForZSet().add(musicKey,user.getUserId().toString(),System.currentTimeMillis());
-            stringRedisTemplate.expire(musicKey,LISTENING_USER_TL, TimeUnit.MINUTES);
-        }
+        stringRedisTemplate.opsForZSet().add(musicKey, userId.toString(), System.currentTimeMillis());
+        stringRedisTemplate.expire(musicKey, LISTENING_USER_TL, TimeUnit.MINUTES);
     }
 
     @Override
-    public void setHotMusic(Long musicId){
+    public void setHotMusic(Long musicId) {
         String hotKey = MUSIC_HOT;
         Double score = stringRedisTemplate.opsForZSet().score(hotKey, musicId);
-        if (score == null){
-            stringRedisTemplate.opsForZSet().add(hotKey,musicId.toString(),1);
-            stringRedisTemplate.expire(hotKey,MUSIC_HOT_TL,TimeUnit.HOURS);
-        }else{
-            stringRedisTemplate.opsForZSet().add(hotKey,musicId.toString(),score + 1);
+        if (score == null) {
+            stringRedisTemplate.opsForZSet().add(hotKey, musicId.toString(), 1);
+            stringRedisTemplate.expire(hotKey, MUSIC_HOT_TL, TimeUnit.HOURS);
+        } else {
+            stringRedisTemplate.opsForZSet().add(hotKey, musicId.toString(), score + 1);
         }
     }
 
@@ -136,9 +142,9 @@ public class MusicServiceImpl extends ServiceImpl<MusicMapper, Music>
     public BaseResponse<List<ListeningVo>> getListening(Long musicId) {
         String musicKey = MUSIC_LISTENING_USER + musicId;
 
-        Set<String> ids = stringRedisTemplate.opsForZSet().range(musicKey,0, 4);
+        Set<String> ids = stringRedisTemplate.opsForZSet().range(musicKey, 0, 4);
 
-        if (ids == null || ids.isEmpty()){
+        if (ids == null || ids.isEmpty()) {
             return Results.success(new ArrayList<>());
         }
 
@@ -150,38 +156,38 @@ public class MusicServiceImpl extends ServiceImpl<MusicMapper, Music>
     }
 
     @Override
-    public BaseResponse<List<HotMusicVo>> getHotMusic(){
+    public BaseResponse<List<HotMusicVo>> getHotMusic() {
         Set<String> ids = stringRedisTemplate.opsForZSet().reverseRange(MUSIC_HOT, 0, -1);
 
-        if (ids == null || ids.isEmpty()){
+        if (ids == null || ids.isEmpty()) {
             return Results.success(new ArrayList<>());
         }
 
         List<Long> musicIds = ids.stream().map(Long::valueOf).collect(Collectors.toList());
         String idStr = StrUtil.join(",", musicIds);
-        List<HotMusicVo> hotMusic = userService.query().in("musicId", musicIds).last("ORDER BY FIELD(musicListId," + idStr + ")").list().stream().map(music -> BeanUtil.copyProperties(music, HotMusicVo.class)).collect(Collectors.toList());
+        List<HotMusicVo> hotMusic = this.query().in("musicId", musicIds).last("ORDER BY FIELD(musicListId," + idStr + ")").list().stream().map(music -> BeanUtil.copyProperties(music, HotMusicVo.class)).collect(Collectors.toList());
 
         return Results.success(hotMusic);
     }
 
     @Override
     public BaseResponse<Long> likeMusic(Long musicId) {
-        if (musicId <= 0){
+        if (musicId <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
         Long userId = UserHolder.getUser().getUserId();
 
         String key = MUSIC_LIKE_USER + userId;
         Boolean isLiked = stringRedisTemplate.opsForSet().isMember(key, userId.toString());
-        if (Boolean.FALSE.equals(isLiked)){
+        if (Boolean.FALSE.equals(isLiked)) {
             boolean isSuccess = update().setSql("musicLikeNumber = musicLikeNumber + 1").eq("musicId", musicId).update();
-            if (isSuccess){
-                stringRedisTemplate.opsForSet().add(key,userId.toString());
+            if (isSuccess) {
+                stringRedisTemplate.opsForSet().add(key, userId.toString());
             }
-        }else {
+        } else {
             boolean isSuccess = update().setSql("musicLikeNumber = musicLikeNumber - 1").eq("musicId", musicId).update();
-            if (isSuccess){
-                stringRedisTemplate.opsForSet().remove(key,userId.toString());
+            if (isSuccess) {
+                stringRedisTemplate.opsForSet().remove(key, userId.toString());
             }
         }
         return Results.success();
@@ -189,15 +195,15 @@ public class MusicServiceImpl extends ServiceImpl<MusicMapper, Music>
 
 
     @Override
-    public BaseResponse<List<MusicVo>> searchMusic(String context, int pageNumber, int pageSize){
-        if (context == null || context.isEmpty()){
+    public BaseResponse<List<MusicVo>> searchMusic(String context, int pageNumber, int pageSize) {
+        if (context == null || context.isEmpty()) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
 
         QueryWrapper<Music> musicQueryWrapper = new QueryWrapper<>();
-        musicQueryWrapper.like("musicTitle",context);
+        musicQueryWrapper.like("musicTitle", context);
         List<Music> musics = this.page(new Page<>(pageNumber, pageSize), musicQueryWrapper).getRecords();
-        if (musics == null){
+        if (musics == null) {
             return Results.success(new ArrayList<>());
         }
 
@@ -206,12 +212,12 @@ public class MusicServiceImpl extends ServiceImpl<MusicMapper, Music>
     }
 
     @Override
-    public BaseResponse<List<MusicVo>> eAlbum(){
+    public BaseResponse<List<MusicVo>> eAlbum() {
         QueryWrapper<Music> musicQueryWrapper = new QueryWrapper<>();
         musicQueryWrapper.orderByDesc("musicId");
 
         List<Music> musics = this.page(new Page<>(0, 15), musicQueryWrapper).getRecords();
-        if (musics == null){
+        if (musics == null) {
             return Results.success(new ArrayList<>());
         }
 
@@ -221,10 +227,11 @@ public class MusicServiceImpl extends ServiceImpl<MusicMapper, Music>
 
     /**
      * 获取我的喜欢的音乐
+     *
      * @return
      */
     @Override
-    public BaseResponse<List<MusicVo>> getFavoriteMusic(){
+    public BaseResponse<List<MusicVo>> getFavoriteMusic() {
         BiFunction<String, Set<Long>, List<MusicVo>> biFunction = (String column, Set<Long> set) -> {
             List<Music> musics = this.query().in(column, set).list();
             return BeanUtil.copyToList(musics, MusicVo.class);
@@ -234,8 +241,48 @@ public class MusicServiceImpl extends ServiceImpl<MusicMapper, Music>
 
 
     @Override
-    public BaseResponse<Boolean> favoriteMusic(Long musicId){
-        return favoriteService.setFavorite(MUSIC_PREFIX,musicId);
+    public BaseResponse<List<ShowMusicVo2>> getListened() {
+        Long userId = UserHolder.getUser().getUserId();
+        return Results.success(getListened(LISTENED + userId));
+    }
+
+    @Override
+    public BaseResponse<List<ShowMusicVo2>> getListenedWeek() {
+        Long userId = UserHolder.getUser().getUserId();
+        return Results.success(getListened(LISTENED_WEEK + userId));
+    }
+
+    public List<ShowMusicVo2> getListened(String prefix) {
+        Long userId = UserHolder.getUser().getUserId();
+        Set<String> musicIds = redisUtil.getKeysByDesc(prefix + userId);
+        String idStr = CharSequenceUtil.join(",", musicIds);
+        List<Music> musicList = this.query().in("musicId", musicIds).last("ORDER BY FIELD(musicListId," + idStr + ")").list();
+        return toShowMusicVoList(musicList);
+    }
+
+
+    public void setListened(Long musicId, Long userId, String prefix, Long time) {
+        //todo 只能保存100个
+        redisUtil.setScore(prefix + userId, time, TimeUnit.DAYS, musicId);
+    }
+
+//    public ShowMusicVo2 toShowMusicVo(Music music) {
+//
+//    }
+
+    public List<ShowMusicVo2> toShowMusicVoList(List<Music> musicList) {
+        return musicList.stream().map(music -> {
+            //todo 重复创建对象消耗内存
+            User user = userService.query().eq("userId", music.getMusicId()).one();
+            ShowMusicVo2 showMusicVo2 = BeanUtil.toBean(music, ShowMusicVo2.class);
+            showMusicVo2.setNickname(user.getNickName());
+            return showMusicVo2;
+        }).collect(Collectors.toList());
+    }
+
+    @Override
+    public BaseResponse<Boolean> favoriteMusic(Long musicId) {
+        return favoriteService.setFavorite(MUSIC_PREFIX, musicId);
     }
 }
 

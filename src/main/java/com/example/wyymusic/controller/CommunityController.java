@@ -30,6 +30,11 @@ public class CommunityController {
         return communityService.addCommunity(request.getTitle(), request.getText(), request.getImgList(), request.getMusicId());
     }
 
+    @GetMapping("/get/feed/sql")
+    public BaseResponse<List<CommunityVo>> getCommunityBySqlFeed(int pageNumber, int pageSize){
+        return communityService.getCommunityBySqlFeed(pageNumber,pageSize);
+    }
+
     @GetMapping("/get/feed")
     public BaseResponse<CommunityFeedVo> getCommunityByFeed(Long max, Integer offset) {
         return communityService.getCommunityByFeed(max, offset);

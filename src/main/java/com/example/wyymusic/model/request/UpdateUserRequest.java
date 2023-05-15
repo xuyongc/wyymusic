@@ -5,4 +5,5 @@ package com.example.wyymusic.model.request;
  * @CreteDate 2023/5/6 16:26
  **/
 public class UpdateUserRequest {
+
 }

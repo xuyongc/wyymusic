@@ -69,7 +69,7 @@ public interface MusicListService extends IService<MusicList> {
      * @param musicListId
      * @return
      */
-    BaseResponse<List<ShowMusicVo>> getMusicByList(Long musicListId);
+    BaseResponse<List<ShowMusicVo>> getMusicFromPlaylist(Long musicListId);
 
     /**
      * 获取热点歌单

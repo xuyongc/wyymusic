@@ -22,4 +22,9 @@ public class ShowMusicVo {
      * 封面地址
      */
     private String showImgUrl;
+
+    /**
+     * 用户昵称
+     */
+    private String nickName;
 }

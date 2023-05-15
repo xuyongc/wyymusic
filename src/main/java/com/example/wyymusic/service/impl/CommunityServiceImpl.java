@@ -125,6 +125,15 @@ public class CommunityServiceImpl extends ServiceImpl<CommunityMapper, Community
     }
 
     @Override
+    public BaseResponse<List<CommunityVo>> getCommunityBySqlFeed(int pageNumber,int pageSize){
+        QueryWrapper<Community> communityQueryWrapper = new QueryWrapper<Community>().orderByDesc("communityId");
+        List<Community> communities = this.page(new Page<>(pageNumber, pageSize), communityQueryWrapper).getRecords();
+
+        List<CommunityVo> communityVos = getCommunityVo(communities);
+        return Results.success(communityVos);
+    }
+
+    @Override
     public BaseResponse<CommunityFeedVo> getCommunityByFeed(Long max, Integer offset){
         Long userId = UserHolder.getUser().getUserId();
 

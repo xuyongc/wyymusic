@@ -16,13 +16,13 @@ import com.example.wyymusic.model.vo.*;
 import com.example.wyymusic.service.FavoriteService;
 import com.example.wyymusic.service.MusicListService;
 import com.example.wyymusic.service.MusicService;
-import com.example.wyymusic.utils.HotUtil;
+
+import com.example.wyymusic.utils.RedisUtil;
 import com.example.wyymusic.utils.UserHolder;
 import com.google.gson.Gson;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
-
 import javax.annotation.Resource;
 import java.util.*;
 import java.util.function.BiFunction;
@@ -43,7 +43,7 @@ public class MusicListServiceImpl extends ServiceImpl<MusicListMapper, MusicList
     private MusicService musicService;
 
     @Resource
-    private HotUtil hotUtil;
+    private RedisUtil redisutil;
 
     @Resource
     private StringRedisTemplate stringRedisTemplate;
@@ -163,17 +163,14 @@ public class MusicListServiceImpl extends ServiceImpl<MusicListMapper, MusicList
      */
     @Override
     public BaseResponse<List<MusicListVo>> getMusicList(Long userId) {
-
-        if (userId <= 0) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "该用户不存在");
-        }
-
+        
         List<MusicList> musicLists = query().eq("userId", userId).list();
 
         List<MusicListVo> musicListVos = musicLists.stream().map(musicList -> BeanUtil.toBean(musicList, MusicListVo.class)).collect(Collectors.toList());
 
         return Results.success(musicListVos);
     }
+
 
 
     /**
@@ -183,11 +180,11 @@ public class MusicListServiceImpl extends ServiceImpl<MusicListMapper, MusicList
      * @return
      */
     @Override
-    public BaseResponse<List<ShowMusicVo>> getMusicByList(Long musicListId) {
+    public BaseResponse<List<ShowMusicVo>> getMusicFromPlaylist(Long musicListId) {
         //判断歌单是否存在
         MusicList musicList = isHaveMusicList(musicListId);
         //设置redis热点+1
-        hotUtil.setHotMusic(MUSIC_LIST_HOT, musicListId);
+        redisutil.setHotMusic(MUSIC_LIST_HOT, musicListId);
         //获取歌曲列表
         String musicIds = musicList.getMusicListContentIds();
         //转为set
@@ -354,7 +351,6 @@ public class MusicListServiceImpl extends ServiceImpl<MusicListMapper, MusicList
         }
 
         MusicList musicList = query().eq("musicListId", musicListId).one();
-
 
         if (musicList == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "该歌单不存在");

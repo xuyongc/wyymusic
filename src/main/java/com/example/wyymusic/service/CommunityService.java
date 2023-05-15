@@ -44,6 +44,14 @@ public interface CommunityService extends IService<Community> {
     BaseResponse<Boolean> updateCommunity(Long commId, String title, String text, List<String> imgPaths, Long musicId);
 
     /**
+     * 获取mysql版的feed流
+     * @param pageNumber
+     * @param pageSize
+     * @return
+     */
+    BaseResponse<List<CommunityVo>> getCommunityBySqlFeed(int pageNumber, int pageSize);
+
+    /**
      * 获取动态通过Feed流
      * @param max
      * @param offset

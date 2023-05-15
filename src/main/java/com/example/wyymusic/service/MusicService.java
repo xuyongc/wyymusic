@@ -6,6 +6,7 @@ import com.example.wyymusic.model.domain.Music;
 import com.example.wyymusic.model.vo.HotMusicVo;
 import com.example.wyymusic.model.vo.ListeningVo;
 import com.example.wyymusic.model.vo.MusicVo;
+import com.example.wyymusic.model.vo.ShowMusicVo2;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -34,12 +35,6 @@ public interface MusicService extends IService<Music> {
      * @return
      */
     BaseResponse<MusicVo> listenMusic(Long musicId);
-
-    /**
-     * 设置正在听的人
-     * @param musicId
-     */
-    void setListening(Long musicId);
 
     /**
      * 设置今日热门
@@ -87,6 +82,18 @@ public interface MusicService extends IService<Music> {
      * @return
      */
     BaseResponse<List<MusicVo>> getFavoriteMusic();
+
+    /**
+     * 获取听歌排行
+     * @return
+     */
+    BaseResponse<List<ShowMusicVo2>> getListened();
+
+    /**
+     * 获取听歌周排
+     * @return
+     */
+    BaseResponse<List<ShowMusicVo2>> getListenedWeek();
 
     /**
      * 添加新欢音乐

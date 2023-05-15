@@ -14,4 +14,6 @@ public interface TimeConstant {
     long MUSIC_HOT_TL = 12L;
 
     long MUSIC_LIST_HOT_TL = 7L;
+
+    long LISTENED_WEEK_TL = 7L;
 }

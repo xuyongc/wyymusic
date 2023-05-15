@@ -1,13 +1,12 @@
 package com.example.wyymusic.controller;
 
 import com.example.wyymusic.common.BaseResponse;
-import com.example.wyymusic.common.ErrorCode;
-import com.example.wyymusic.common.exception.BusinessException;
 import com.example.wyymusic.model.request.MusicUploadRequest;
-import com.example.wyymusic.model.request.SearchRequest;
+import com.example.wyymusic.model.dto.SearchRequest;
 import com.example.wyymusic.model.vo.HotMusicVo;
 import com.example.wyymusic.model.vo.ListeningVo;
 import com.example.wyymusic.model.vo.MusicVo;
+import com.example.wyymusic.model.vo.ShowMusicVo2;
 import com.example.wyymusic.service.MusicService;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -65,6 +64,16 @@ public class MusicController {
     @GetMapping("/get/favorite")
     public BaseResponse<List<MusicVo>> getFavorite(){
         return musicService.getFavoriteMusic();
+    }
+
+    @GetMapping("/get/listened")
+    public BaseResponse<List<ShowMusicVo2>> getListened(){
+        return musicService.getListened();
+    }
+
+    @GetMapping("/get/listened/week")
+    public BaseResponse<List<ShowMusicVo2>> getListenedWeek(){
+        return musicService.getListenedWeek();
     }
 
     @GetMapping("/set/favorite")

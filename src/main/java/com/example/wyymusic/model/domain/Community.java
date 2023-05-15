@@ -10,6 +10,7 @@ import lombok.Data;
 
 /**
  * 动态表（社区表）
+ * @author xyc
  * @TableName community
  */
 @TableName(value ="community")
@@ -40,6 +41,11 @@ public class Community implements Serializable {
      * 动态文字内容
      */
     private String textContent;
+
+    /**
+     * 喜欢数
+     */
+    private Long communityLikeNumber;
 
     /**
      * 创建时间

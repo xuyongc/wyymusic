@@ -4,11 +4,11 @@ import com.example.wyymusic.common.BaseResponse;
 import com.example.wyymusic.common.ErrorCode;
 import com.example.wyymusic.common.Results;
 import com.example.wyymusic.common.exception.BusinessException;
+import com.example.wyymusic.model.dto.GetUserListRequest;
 import com.example.wyymusic.model.request.*;
 import com.example.wyymusic.model.vo.UserVo;
 import com.example.wyymusic.service.UserService;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 

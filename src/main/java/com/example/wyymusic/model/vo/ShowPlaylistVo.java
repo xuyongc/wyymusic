@@ -1,32 +1,28 @@
 package com.example.wyymusic.model.vo;
 
+import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
 import lombok.Data;
 
-import java.io.Serializable;
 import java.util.Date;
+import java.util.List;
 
 /**
- * 歌曲表
  * @author xyc
- * @TableName music
- */
+ * @CreteDate 2023/5/13 10:49
+ **/
 @Data
-public class MusicVo implements Serializable {
+public class ShowPlaylistVo {
     /**
-     * 音乐Id
+     * 表ID
      */
-    private Long musicId;
-
-    /**
-     * 音乐标题
-     */
-    private String musicTitle;
+    private Long musicListId;
 
     /**
      * 作者Id
      */
-    private Long musicUserId;
+    private Long userId;
 
     /**
      * 封面地址
@@ -34,19 +30,9 @@ public class MusicVo implements Serializable {
     private String showImgUrl;
 
     /**
-     * 作品地址
+     * 歌单评价
      */
-    private String musicAddress;
-
-    /**
-     * 歌词
-     */
-    private String musicWord;
-
-    /**
-     * 作者
-     */
-    private String nickName;
+    private String musicListInfo;
 
     /**
      * 喜欢数

@@ -1,13 +1,11 @@
 package com.example.wyymusic.controller;
 
 import com.example.wyymusic.common.BaseResponse;
-import com.example.wyymusic.model.domain.MusicList;
 import com.example.wyymusic.model.request.MusicAddBatchRequest;
 import com.example.wyymusic.model.request.SaveMusicListRequest;
-import com.example.wyymusic.model.request.SearchRequest;
+import com.example.wyymusic.model.dto.SearchRequest;
 import com.example.wyymusic.model.vo.MusicListVo;
 import com.example.wyymusic.model.vo.MusicListVoAboutUser;
-import com.example.wyymusic.model.vo.MusicVo;
 import com.example.wyymusic.model.vo.ShowMusicVo;
 import com.example.wyymusic.service.MusicListService;
 import org.springframework.stereotype.Controller;
@@ -96,8 +94,8 @@ public class MusicListController {
      * @return
      */
     @GetMapping("/get/music")
-    public BaseResponse<List<ShowMusicVo>> getMusicByList(Long musicListId){
-        return musicListService.getMusicByList(musicListId);
+    public BaseResponse<List<ShowMusicVo>> getMusicFromPlaylist(Long musicListId){
+        return musicListService.getMusicFromPlaylist(musicListId);
     }
 
     /**

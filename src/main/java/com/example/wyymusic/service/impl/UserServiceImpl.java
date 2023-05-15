@@ -18,6 +18,8 @@ import com.example.wyymusic.utils.RegexUtil;
 import com.example.wyymusic.utils.UserHolder;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -25,7 +27,9 @@ import org.springframework.util.DigestUtils;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static com.example.wyymusic.constant.CommonConstant.*;
@@ -45,7 +49,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     private StringRedisTemplate stringRedisTemplate;
 
 
-    private static final ObjectMapper mapper = new ObjectMapper();
+    private static final ObjectMapper MAPPER = new ObjectMapper();
 
     @Override
     public String userLogin(String userAccount, String userPassword, HttpServletRequest request) {
@@ -99,7 +103,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         if (RegexUtil.isPhone(phone)) {
             throw new BusinessException(ErrorCode.ERROR, "手机号有误");
         }
-
         //        查缓存里面是否存在
         String loginCode = stringRedisTemplate.opsForValue().get(LOGIN_CODE_KEY + phone);
 
@@ -181,14 +184,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 
     public String saveToRedis(User user) {
         //        做用户脱敏
-        UserVo userVo = BeanUtil.copyProperties(user, UserVo.class);
+        UserVo userVo = toUserVo(user);
         //        生成id，返回给前台
         String uuId = IdUtil.simpleUUID();
         String userVoJson;
         try {
-            userVoJson = mapper.writeValueAsString(userVo);
+            userVoJson = MAPPER.writeValueAsString(userVo);
         } catch (JsonProcessingException e) {
-            throw new RuntimeException();
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR);
         }
         //        以json格式存到缓存里面
         stringRedisTemplate.opsForValue().set(LOGIN_USER_KEY + uuId, userVoJson, LOGIN_USER_TL, TimeUnit.MINUTES);
@@ -213,6 +216,22 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     @Override
     public UserVo getCurrentUser() {
         return UserHolder.getUser();
+    }
+
+    /**
+     * 用户脱敏
+     * @param user
+     * @return
+     */
+    public UserVo toUserVo(User user){
+        UserVo userVo = BeanUtil.toBean(user, UserVo.class);
+        String tag = user.getTag();
+        Gson gson = new Gson();
+        java.lang.reflect.Type setResult = new TypeToken<HashMap<Integer, Set<String>>>() {}.getType();
+        Set<String> tags = gson.fromJson(tag,setResult);
+        userVo.setTag(tags);
+
+        return userVo;
     }
 }
 

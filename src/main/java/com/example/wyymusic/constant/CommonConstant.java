@@ -35,6 +35,10 @@ public interface CommonConstant {
 
     String INDEX_SHOW_IMAGE = "index:image";
 
+    String LISTENED = "music:listened:";
+
+    String LISTENED_WEEK = "music:listened:week:";
+
     String FEED_PREFIX = "feed:";
 
     int INDEX_IMAGE_MAX_SIZE = 9;

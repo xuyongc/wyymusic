@@ -10,6 +10,7 @@
             <result property="imgList" column="imgList" jdbcType="VARCHAR"/>
             <result property="musicId" column="musicId" jdbcType="BIGINT"/>
             <result property="textContent" column="textContent" jdbcType="VARCHAR"/>
+            <result property="communityLikeNumber" column="communityLikeNumber" jdbcType="BIGINT"/>
             <result property="createTime" column="createTime" jdbcType="TIMESTAMP"/>
             <result property="updateTime" column="updateTime" jdbcType="TIMESTAMP"/>
             <result property="isDelete" column="isDelete" jdbcType="TINYINT"/>
@@ -17,7 +18,7 @@
 
     <sql id="Base_Column_List">
         communityId,userId,imgList,
-        musicId,textContent,createTime,
-        updateTime,isDelete
+        musicId,textContent,communityLikeNumber,
+        createTime,updateTime,isDelete
     </sql>
 </mapper>
